@@ -1,0 +1,24 @@
+{
+  "name": "ytmnd-to-tiktok",
+  "version": "1.0.0",
+  "description": "Convert YTMND sites into videos for TikTok.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philleif/ytmnd-to-tiktok.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/philleif/ytmnd-to-tiktok/issues"
+  },
+  "homepage": "https://github.com/philleif/ytmnd-to-tiktok#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "mkdirp": "^0.5.1",
+    "node-wget": "^0.4.3"
+  }
+}
