@@ -3,7 +3,9 @@
 const axios = require("axios")
 const mkdirp = require("mkdirp")
 const wget = require("node-wget")
-const ytmnd = "timetraveller"
+const { getAudioDurationInSeconds } = require("get-audio-duration")
+
+const ytmnd = "pi"
 const ytmndUrl = "http://" + ytmnd + ".ytmnd.com"
 
 // get ytmnd
@@ -38,37 +40,44 @@ const getData = async html => {
   })
 }
 
-// download media
+// download asset
 const download = async (url, filename) => {
-  try {
-    wget({
-      url: url,
-      dest: "./sites/" + ytmnd + "/" + filename
-    })
-  } catch (error) {
-    throw error
-  }
+  return new Promise((resolve, reject) => {
+    wget(
+      {
+        url: url,
+        dest: "./sites/" + ytmnd + "/" + filename
+      },
+      function(error, response, body) {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(true)
+        }
+      }
+    )
+  })
 }
 
 const run = async () => {
   let html = await fetchHtml()
   let data = await getData(html)
+  let imageFilename = data.site.foreground.url.replace(/(.*)\./gi, "image.")
+  let soundFilename = data.site.sound.url.replace(/(.*)\./gi, "sound.")
 
   // create folder, do nothing if it already exists
   mkdirp("./sites/" + ytmnd, function(error) {
     console.log(error)
   })
 
-  let imageFilename = data.site.foreground.url.replace(/(.*)\./gi, "image.")
+  await download(data.site.foreground.url, imageFilename)
+  await download(data.site.sound.url, soundFilename)
 
-  //console.log(imageFilename)
-
-  let soundFilename = data.site.sound.url.replace(/(.*)\./gi, "sound.")
-
-  console.log(data.site.foreground.url)
-
-  download(data.site.foreground.url, imageFilename)
-  download(data.site.sound.url, soundFilename)
+  getAudioDurationInSeconds("./sites/" + ytmnd + "/" + soundFilename).then(
+    duration => {
+      console.log(duration + "seconds")
+    }
+  )
 
   return true
 }
