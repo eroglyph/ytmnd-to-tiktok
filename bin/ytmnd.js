@@ -3,7 +3,7 @@
 const axios = require("axios")
 const mkdirp = require("mkdirp")
 const wget = require("node-wget")
-const ytmnd = "pi"
+const ytmnd = "timetraveller"
 const ytmndUrl = "http://" + ytmnd + ".ytmnd.com"
 
 // get ytmnd
@@ -51,8 +51,6 @@ const download = async (url, filename) => {
 }
 
 const run = async () => {
-  let ytmnd = "pi"
-
   let html = await fetchHtml()
   let data = await getData(html)
 
@@ -62,7 +60,12 @@ const run = async () => {
   })
 
   let imageFilename = data.site.foreground.url.replace(/(.*)\./gi, "image.")
+
+  //console.log(imageFilename)
+
   let soundFilename = data.site.sound.url.replace(/(.*)\./gi, "sound.")
+
+  console.log(data.site.foreground.url)
 
   download(data.site.foreground.url, imageFilename)
   download(data.site.sound.url, soundFilename)
