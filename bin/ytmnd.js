@@ -1,24 +1,22 @@
 "use strict"
 
 const axios = require("axios")
-const mkdirp = require("mkdirp")
 const wget = require("node-wget")
 const cmd = require("node-cmd")
 const path = require("path")
-
+const sizeOf = require('image-size');
 const { getAudioDurationInSeconds } = require("get-audio-duration")
 const commandLineArgs = require("command-line-args")
 
 const optionDefinitions = [
-  { name: "ytmnd", type: String, multiple: false, defaultOption: true },
-  { name: "length", type: String, multiple: false, defaultOption: false }
+  { name: "ytmnd", type: String, multiple: false, defaultOption: true }
 ]
-
 const options = commandLineArgs(optionDefinitions)
-
-console.log(options)
-
 const ytmnd = options.ytmnd
+const tiktok = {
+  height: 812,
+  width: 375
+}
 const ytmndUrl = "http://" + ytmnd + ".ytmnd.com"
 const ytmndPath = "./sites/" + ytmnd + "/"
 let ytmndInfo = {}
@@ -91,28 +89,58 @@ const getDuration = async filename => {
   })
 }
 
+// get image dimensions
+const getImageSize = async filename => {
+  return new Promise((resolve, reject) => {
+    try {
+      let dimensions = sizeOf(ytmndPath + filename)
+
+      resolve(dimensions)
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
 // render video to post
 const createTikTok = async (imageFilename, soundFilename) => {
   return new Promise(async (resolve, reject) => {
     try {
       let commands = []
-      let length = await getDuration(soundFilename)
-
-      if (length < 5) {
-        length = Math.round(length * 3)
-      } else {
-        length = Math.round(length)
+      let imageSize = await getImageSize(imageFilename)
+      let video = {
+        length: await getDuration(soundFilename),
+        cols: 1,
+        rows: Math.round(tiktok.height / imageSize.height) + 1
       }
 
-      console.log("Length: " + length)
+      // final video length
+      if (video.length > 59) {
+        video.length = 59
+      } else {
+        video.length = video.length < 5 ? Math.round(video.length * 3) : Math.round(video.length)
+      }
+
+      // grid size if we have small/weird dimension images
+      if (imageSize.width < 150) {
+        video.cols = Math.round(tiktok.width / imageSize.width) + 1
+      }
+
+      console.log("Video dimensions: " + video)
 
       // render audio
       commands.push(`sox sites/${ytmnd}/${soundFilename} sites/${ytmnd}/sound_looped.mp3 repeat 20 && ffmpeg -ss 0 -t 60 -i sites/${ytmnd}/sound_looped.mp3 sites/${ytmnd}/sound_final.mp3`)
 
       // resize and stack image
-      commands.push(`convert sites/${ytmnd}/${imageFilename} -resize 375x375 sites/${ytmnd}/resized_${imageFilename}`)
+      let tileWidth = Math.round(tiktok.width / video.cols) + 1
 
-      commands.push(`ffmpeg -i sites/${ytmnd}/resized_${imageFilename} -i sites/${ytmnd}/resized_${imageFilename} -i sites/${ytmnd}/resized_${imageFilename} -filter_complex vstack=inputs=3 sites/${ytmnd}/stacked_${imageFilename}`)
+      commands.push(`convert sites/${ytmnd}/${imageFilename} -resize ${tileWidth}x${tiktok.height} sites/${ytmnd}/resized_${imageFilename}`)
+
+      let tileVStackCommand = ""
+      for (let i = 0; i < video.rows; i++) {
+        tileVStackCommand += `-i sites/${ytmnd}/resized_${imageFilename} `
+      }
+      commands.push(`ffmpeg ${tileVStackCommand}-filter_complex vstack=inputs=${video.rows} sites/${ytmnd}/stacked_${imageFilename}`)
 
       // composite image and video
       if(path.extname(imageFilename) == ".gif") {
@@ -125,7 +153,7 @@ const createTikTok = async (imageFilename, soundFilename) => {
       commands.push(`ffmpeg -i sites/${ytmnd}/video.mp4 -i sites/${ytmnd}/sound_final.mp3 -filter_complex "[1:0] adelay=0|0 [delayed];[0:1][delayed] amix=inputs=2" -map 0:0 -c:a aac -strict -2 -c:v copy sites/${ytmnd}/video_wsound.mp4`)
 
       // crop video to specified length
-      commands.push(`ffmpeg -ss 00:00:00 -i sites/${ytmnd}/video_wsound.mp4 -to 00:00:${length} -c copy sites/${ytmnd}/tiktok.mp4`)
+      commands.push(`ffmpeg -ss 00:00:00 -i sites/${ytmnd}/video_wsound.mp4 -to 00:00:${video.length} -c copy sites/${ytmnd}/tiktok.mp4`)
 
       // cleanup
       // let cleanUp = `rm *_*`
