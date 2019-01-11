@@ -137,10 +137,10 @@ const createTikTok = async (imageFilename, soundFilename) => {
       commands.push(`convert sites/${ytmnd}/${imageFilename} -resize ${tileWidth}x${tiktok.height} sites/${ytmnd}/resized_${imageFilename}`)
 
       let tileVStackCommand = ""
-      for (let i = 0; i < video.rows; i++) {
+      for (let i = 0; i < video.rows + 1; i++) {
         tileVStackCommand += `-i sites/${ytmnd}/resized_${imageFilename} `
       }
-      commands.push(`ffmpeg ${tileVStackCommand}-filter_complex vstack=inputs=${video.rows} sites/${ytmnd}/stacked_${imageFilename}`)
+      commands.push(`ffmpeg ${tileVStackCommand}-filter_complex vstack=inputs=${video.rows + 1} sites/${ytmnd}/stacked_${imageFilename}`)
 
       // composite image and video
       if(path.extname(imageFilename) == ".gif") {
@@ -153,7 +153,7 @@ const createTikTok = async (imageFilename, soundFilename) => {
       commands.push(`ffmpeg -i sites/${ytmnd}/video.mp4 -i sites/${ytmnd}/sound_final.mp3 -filter_complex "[1:0] adelay=0|0 [delayed];[0:1][delayed] amix=inputs=2" -map 0:0 -c:a aac -strict -2 -c:v copy sites/${ytmnd}/video_wsound.mp4`)
 
       // crop video to specified length
-      commands.push(`ffmpeg -ss 00:00:00 -i sites/${ytmnd}/video_wsound.mp4 -to 00:00:${video.length} -c copy sites/${ytmnd}/tiktok.mp4`)
+      commands.push(`ffmpeg -ss 00:00:00 -i sites/${ytmnd}/video_wsound.mp4 -to 00:00:${video.length} -c copy tiktoks/${ytmnd}.mp4`)
 
       // cleanup
       // let cleanUp = `rm *_*`

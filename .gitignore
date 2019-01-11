@@ -62,6 +62,7 @@ typings/
 
 # downloaded sites
 sites/
+tiktoks/
 
 # OSX
 .DS_Store

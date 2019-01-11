@@ -11,4 +11,4 @@ Install:
 `npm install`
 
 Run:
-`$ node bin/ytmnd.js --ytmnd getreadyforcoconuts` will render an uploadable tiktok.mp4 in /sites/getreadyforcoconuts.
+`$ node bin/ytmnd.js --ytmnd getreadyforcoconuts` will render an uploadable mp4 in ./tiktoks
