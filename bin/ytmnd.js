@@ -14,8 +14,8 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions)
 const ytmnd = options.ytmnd
 const tiktok = {
-  height: 812,
-  width: 375
+  height: 640,
+  width: 600
 }
 const ytmndUrl = "http://" + ytmnd + ".ytmnd.com"
 const ytmndPath = "./sites/" + ytmnd + "/"
@@ -136,17 +136,17 @@ const createTikTok = async (imageFilename, soundFilename) => {
 
       commands.push(`convert sites/${ytmnd}/${imageFilename} -resize ${tileWidth}x${tiktok.height} sites/${ytmnd}/resized_${imageFilename}`)
 
-      let tileVStackCommand = ""
+      /* let tileVStackCommand = ""
       for (let i = 0; i < video.rows + 1; i++) {
         tileVStackCommand += `-i sites/${ytmnd}/resized_${imageFilename} `
       }
       commands.push(`ffmpeg ${tileVStackCommand}-filter_complex vstack=inputs=${video.rows + 1} sites/${ytmnd}/stacked_${imageFilename}`)
-
+ */
       // composite image and video
       if(path.extname(imageFilename) == ".gif") {
-        commands.push(`ffmpeg -i assets/bg.mp4 -ignore_loop 0 -i sites/${ytmnd}/stacked_${imageFilename} -filter_complex "[0:v][1:v] overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:enable='between(t,0,60):shortest=1" -pix_fmt yuv420p -c:a copy sites/${ytmnd}/video.mp4`)
+        commands.push(`ffmpeg -i assets/bg.mp4 -ignore_loop 0 -i sites/${ytmnd}/resized_${imageFilename} -filter_complex "[0:v][1:v] overlay=(main_w-overlay_w)/2:(main_h-overlay_h)/2:enable='between(t,0,60):shortest=1" -pix_fmt yuv420p -c:a copy sites/${ytmnd}/video.mp4`)
       } else {
-        commands.push(`ffmpeg -i assets/bg.mp4 -i sites/${ytmnd}/stacked_${imageFilename} -filter_complex "[0:v][1:v] overlay=0:0" -pix_fmt yuv420p -c:a copy sites/${ytmnd}/video.mp4`)
+        commands.push(`ffmpeg -i assets/bg.mp4 -i sites/${ytmnd}/resized_${imageFilename} -filter_complex "[0:v][1:v] overlay=0:0" -pix_fmt yuv420p -c:a copy sites/${ytmnd}/video.mp4`)
       }
 
       // render video with sound
@@ -177,6 +177,11 @@ const run = async () => {
     "image."
   )
   let soundFilename = ytmndInfo.site.sound.url.replace(/(.*)\./gi, "sound.")
+
+  console.log(ytmndInfo.site.foreground.url)
+  console.log(ytmndInfo.site.sound.url)
+  console.log(imageFilename)
+  console.log(soundFilename)
 
   await download(ytmndInfo.site.foreground.url, imageFilename)
   await download(ytmndInfo.site.sound.url, soundFilename)
